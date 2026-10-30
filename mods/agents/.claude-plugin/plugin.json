@@ -1,6 +1,6 @@
 {
   "name": "agents",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A live side pane of every subagent: what each is doing, its tool calls, tokens and context, and its full transcript",
   "author": {
     "name": "dimay7",

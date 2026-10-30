@@ -2,20 +2,9 @@
 
 A live side pane of every subagent Claude Code is running: what each one is doing right now, what it has spent, and everything it said and did.
 
-```
-◌ Main session                                   0:42
-  waiting on 2 agents                      84k context
+![The agents pane: the main session, three running subagents with what each is doing and has spent, and the finished ones folded below](docs/pane.svg)
 
-Running · 2
-◌ Review the loader changes        ⟋⟍    1:12   ›
-  general-purpose · Bash  cargo test -p core
-  12 calls · 8.4k out · 31k context      Bash for 9s
-  ◌ Find loader call sites        ⟋      0:20   ›
-    Explore · thinking · last Grep
-    4 calls · 1.1k out · 12k context   last call 3s ago
-
-Finished · 6 · 1 failed  ›
-```
+<sub>Sample data.</sub>
 
 ## What it shows
 
@@ -35,7 +24,7 @@ Click any row to open its details: the prompt it was given, its last tool calls 
 /plugin install agents --marketplace dimay7/camplified
 ```
 
-The pane opens on its own when a session starts. If you close it, `/agent-pane` brings it back.
+The pane opens on its own when a session starts. Close it and it stays closed, in later sessions too, until you run `/agent-pane`.
 
 ## Settings
 

@@ -2,21 +2,9 @@
 
 A timeline of every tool call Claude Code and its subagents make: what ran in parallel, what was slow, and where an agent sat idle.
 
-```
-Trace                                   30s  2m  10m  all
-               -2m      -90s     -1m      -30s      now
-● Main session  ▮▏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┊
-● Review loader   ▏▮▮▮▮▏ ▮▮▮▮▮▮▮▮▮▮▮▮▮▮        ▮▮▮┊
-  ● ↳ Find call sites   ▮▮▮▮▮▮▮ done                 ┊
-● Scan the corpus ▮▮▮▮━━━━━ no tool call for 1:31 ━━━┊
-● Plan the rebrand                     ▮▮▮▮▏        ┊
+![The trace pane: a lane per agent, each tool call a bar as long as it took, the slowest calls and a summary below](docs/pane.svg)
 
-Slowest calls
-■ Bash  cargo test -p core          41.0s · Review loader
-■ Bash  cargo build                 14.0s · Review loader
-■ Bash  npm test                     9.6s · Plan the rebrand
-4 in parallel now   86% of tool time in bash   1 error
-```
+<sub>Sample data.</sub>
 
 ## What it shows
 
@@ -37,7 +25,7 @@ On the terminal, where there is no chart, each lane is a line with its call coun
 /plugin install trace --marketplace dimay7/camplified
 ```
 
-The pane opens on its own when a session starts. If you close it, `/trace-pane` brings it back. It sits beside the [agents](../agents) pane as its own tab; the two install independently.
+The pane opens on its own when a session starts. Close it and it stays closed, in later sessions too, until you run `/trace-pane`. It sits beside the [agents](../agents) pane as its own tab; the two install independently.
 
 ## Settings
 

@@ -4,6 +4,11 @@ Each mod is versioned on its own; entries are grouped by mod, newest first.
 
 ## trace
 
+### 0.1.1
+
+- A pane you close stays closed, in later sessions too, until you run `/trace-pane`.
+- The README shows the pane, drawn from sample data.
+
 ### 0.1.0
 
 - A lane per loop, the main session's and each subagent's, nested under the agent that started it.
@@ -14,6 +19,11 @@ Each mod is versioned on its own; entries are grouped by mod, newest first.
 - Daily update check, off in the mod's settings.
 
 ## agents
+
+### 0.1.1
+
+- A pane you close stays closed, in later sessions too, until you run `/agent-pane`.
+- The README shows the pane, drawn from sample data.
 
 ### 0.1.0
 

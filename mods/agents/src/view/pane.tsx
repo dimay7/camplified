@@ -16,22 +16,35 @@ import { makeKit } from './kit'
 import { listView } from './list'
 import { transcriptView } from './transcript'
 
-/** Registers the slash command and opens the pane, once the session is ready. */
+// Set when the person closes the pane, cleared by /agent-pane: a closed pane
+// stays closed in later sessions until they ask for it again.
+const CLOSED_KEY = 'pane.closed'
+
+/** Registers the slash command and opens the pane, unless the person last closed it. */
 export async function startPane($: EngineInterface) {
   await $.command.register({
     // Literal names, here and in the matchers below: the engine reads them off the source.
     name: 'agent-pane',
     description: 'Show the live subagent list in the side pane',
   })
-  void $.ui.open({ id: PANE, title: TITLE })
+  // Unreadable store: open as before rather than leave the person with no pane.
+  const isClosed = (await $.store.get(CLOSED_KEY).catch(() => undefined)) === true
+  if (!isClosed) void $.ui.open({ id: PANE, title: TITLE })
 }
 
 /** The side pane and its slash command: reads state, draws, writes nothing on its own. */
 export function pane(on: On) {
   on('command.run', { command: 'agent-pane' }, async $ => {
+    await $.store.set(CLOSED_KEY, false).catch(() => undefined)
     await $.ui.open({ id: PANE, title: TITLE })
 
     return { text: 'Agents pane opened.' }
+  })
+
+  // Observe only: remembers that the person, not a plugin or an unload, closed it.
+  on('ui.close', async ($, e, next) => {
+    if (e.id === PANE && e.origin.kind === 'person') await $.store.set(CLOSED_KEY, true).catch(() => undefined)
+    return next(e)
   })
 
   on('ui.render', { component: 'Pane', requestId: 'agents' }, async ($, e) => {
