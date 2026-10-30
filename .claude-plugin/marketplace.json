@@ -1,0 +1,17 @@
+{
+  "name": "camplified",
+  "owner": {
+    "name": "dimay7",
+    "url": "https://github.com/dimay7"
+  },
+  "metadata": {
+    "description": "Mods that make Claude Code show more of what it is doing"
+  },
+  "plugins": [
+    {
+      "name": "agents",
+      "source": "./mods/agents",
+      "description": "A live side pane of every subagent: what each is doing, its tool calls, tokens and context, and its full transcript"
+    }
+  ]
+}

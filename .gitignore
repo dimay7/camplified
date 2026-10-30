@@ -1,0 +1,12 @@
+# Written by Claude Code each time it loads a mod from disk
+.claude-plugin/types/
+
+# Unpacked MCP bundles
+.mcpb-cache/
+
+# OS and editor leftovers
+.DS_Store
+*.swp
+*~
+*.log
+node_modules/

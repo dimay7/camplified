@@ -1,0 +1,27 @@
+{
+  "name": "agents",
+  "version": "0.1.0",
+  "description": "A live side pane of every subagent: what each is doing, its tool calls, tokens and context, and its full transcript",
+  "author": {
+    "name": "dimay7",
+    "url": "https://github.com/dimay7"
+  },
+  "homepage": "https://github.com/dimay7/camplified/tree/main/mods/agents",
+  "repository": "https://github.com/dimay7/camplified",
+  "license": "MIT",
+  "keywords": [
+    "subagents",
+    "pane",
+    "monitoring",
+    "transcript"
+  ],
+  "userConfig": {
+    "checkForUpdates": {
+      "type": "boolean",
+      "title": "Check for updates",
+      "description": "Once a day, look on GitHub for a newer version of this mod and for new camplified mods, and say so in a toast. Nothing is installed automatically.",
+      "default": true
+    }
+  },
+  "types": "./types/index.d.ts"
+}
