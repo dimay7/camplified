@@ -12,6 +12,11 @@
       "name": "agents",
       "source": "./mods/agents",
       "description": "A live side pane of every subagent: what each is doing, its tool calls, tokens and context, and its full transcript"
+    },
+    {
+      "name": "trace",
+      "source": "./mods/trace",
+      "description": "A timeline of every agent's tool calls: what ran in parallel, what was slow, where agents sat idle"
     }
   ]
 }
