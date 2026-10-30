@@ -16,22 +16,35 @@ const WINDOWS: [string, number][] = [
   ['all', 0],
 ]
 
-/** Registers the slash command and opens the pane, once the session is ready. */
+// Set when the person closes the pane, cleared by /trace-pane: a closed pane
+// stays closed in later sessions until they ask for it again.
+const CLOSED_KEY = 'pane.closed'
+
+/** Registers the slash command and opens the pane, unless the person last closed it. */
 export async function startPane($: EngineInterface) {
   await $.command.register({
     // Literal names, here and in the matchers below: the engine reads them off the source.
     name: 'trace-pane',
     description: 'Show the timeline of every agent’s tool calls in the side pane',
   })
-  void $.ui.open({ id: 'trace', title: 'Trace' })
+  // Unreadable store: open as before rather than leave the person with no pane.
+  const isClosed = (await $.store.get(CLOSED_KEY).catch(() => undefined)) === true
+  if (!isClosed) void $.ui.open({ id: 'trace', title: 'Trace' })
 }
 
 /** The side pane and its slash command: reads state, draws, writes only the chosen window. */
 export function pane(on: On) {
   on('command.run', { command: 'trace-pane' }, async $ => {
+    await $.store.set(CLOSED_KEY, false).catch(() => undefined)
     await $.ui.open({ id: 'trace', title: 'Trace' })
 
     return { text: 'Trace pane opened.' }
+  })
+
+  // Observe only: remembers that the person, not a plugin or an unload, closed it.
+  on('ui.close', async ($, e, next) => {
+    if (e.id === 'trace' && e.origin.kind === 'person') await $.store.set(CLOSED_KEY, true).catch(() => undefined)
+    return next(e)
   })
 
   on('ui.render', { component: 'Pane', requestId: 'trace' }, async ($, e) => {

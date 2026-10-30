@@ -9,6 +9,11 @@ Each mod installs on its own; pick the ones you want.
 | [`agents`](mods/agents) | A live side pane of every subagent: what each is doing, its tool calls, tokens and context, and its full transcript |
 | [`trace`](mods/trace) | A timeline of every agent's tool calls: what ran in parallel, what was slow, where agents sat idle |
 
+<p>
+  <img src="mods/agents/docs/pane.svg" width="49%" alt="The agents pane, with sample data">
+  <img src="mods/trace/docs/pane.svg" width="49%" alt="The trace pane, with sample data">
+</p>
+
 ## Install
 
 At the prompt of a Claude Code terminal session:
@@ -18,6 +23,8 @@ At the prompt of a Claude Code terminal session:
 ```
 
 Answer `y` to add the camplified marketplace, then pick a scope (Enter takes the user scope, so the mod runs in every session).
+
+The install may end with "1 userConfig option not yet set". That's the mod's daily update check, which is on until you change it with `/plugin configure <mod>@camplified`.
 
 From a shell:
 

@@ -1,6 +1,6 @@
 {
   "name": "trace",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A timeline of every agent's tool calls: what ran in parallel, what was slow, where agents sat idle",
   "author": {
     "name": "dimay7",
