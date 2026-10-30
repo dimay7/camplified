@@ -15,12 +15,12 @@ import { LIVE, MAIN } from './state'
 export const QUIET_MS = 60_000
 const MAX_LANES = 12
 
-const W = 430
-const X0 = 116
-const X1 = 418
-const TOP = 20
-const ROW = 28
-const BAR = 10
+// Lane geometry, in CSS pixels: the chart is drawn at the pane's own width,
+// so these are the sizes on screen.
+const LABEL_W = 104
+const TOP = 14
+const ROW = 17
+const BAR = 6
 
 export type Row = { lane: Lane; depth: number }
 
@@ -107,20 +107,45 @@ const tickStep = (span: number) => STEPS.find(step => span / step <= 4) ?? span 
 
 // The chart sits on its own dark card, so its colours read the same in a
 // light theme and a dark one.
-const PAD_X = 10
-const PAD_Y = 8
+const PAD_X = 8
+const PAD_Y = 6
 const CARD = '#141416'
+// Narrower than this and the lane names crowd the bars out.
+export const MIN_WIDTH = 280
 
 /**
- * The timeline as one SVG: a lane per loop, each tool call a bar as long as it
- * took, coloured by kind, red when it failed; a thin line where the loop was
- * busy between calls; amber where a live agent has gone quiet.
+ * The timeline as one SVG, `width` CSS pixels wide: a lane per loop, each
+ * tool call a bar as long as it took, coloured by kind, red when it failed; a
+ * thin line where the loop was busy between calls; amber where a live agent
+ * has gone quiet.
  */
-export function chartSvg(rows: Row[], from: number, at: number, kinds: Kind[], hasErrors: boolean) {
+export function chartSvg(rows: Row[], from: number, at: number, kinds: Kind[], hasErrors: boolean, width: number) {
+  const W = Math.max(MIN_WIDTH, Math.round(width)) - PAD_X * 2
+  const X0 = LABEL_W
+  const X1 = W - 4
   const span = Math.max(1, at - from)
   const x = (t: number) => X0 + ((Math.min(Math.max(t, from), at) - from) / span) * (X1 - X0)
-  const legendY = TOP + rows.length * ROW + 10
-  const H = legendY + 34
+  const plotBottom = TOP + rows.length * ROW
+  // The legend: the kinds on the chart, errors, and the busy line, wrapped
+  // onto as many rows as the width needs.
+  const items: { fill: string; label: string; isLine: boolean }[] = [
+    ...kinds.map(k => ({ fill: KIND_COLORS[k], label: KIND_LABELS[k], isLine: false })),
+    ...(hasErrors ? [{ fill: ERROR_COLOR, label: 'error', isLine: false }] : []),
+    { fill: '#8b8a99', label: 'busy between calls', isLine: true },
+  ]
+  const itemW = (it: { label: string; isLine: boolean }) => (it.isLine ? 11 : 9) + it.label.length * 4.6 + 10
+  const legendRows: (typeof items)[] = [[]]
+  let used = 0
+  for (const it of items) {
+    if (used + itemW(it) > W && used > 0) {
+      legendRows.push([])
+      used = 0
+    }
+    legendRows[legendRows.length - 1]?.push(it)
+    used += itemW(it)
+  }
+  const legendY = plotBottom + 8
+  const H = legendY + (legendRows.length - 1) * 11 + 4
   const parts: string[] = []
 
   // Time axis: ticks at round steps back from now, and now itself.
@@ -128,47 +153,41 @@ export function chartSvg(rows: Row[], from: number, at: number, kinds: Kind[], h
   for (let ago = step; ago <= span; ago += step) {
     const tx = x(at - ago)
     // Too close to now's label to share the row.
-    if (X1 - tx < 26) continue
-    parts.push(`<line x1="${tx.toFixed(1)}" y1="${TOP - 4}" x2="${tx.toFixed(1)}" y2="${legendY - 6}" stroke="#fff" stroke-opacity=".05"/>`)
-    parts.push(`<text x="${tx.toFixed(1)}" y="11" class="axis" text-anchor="middle">${back(ago)}</text>`)
+    if (X1 - tx < 22) continue
+    parts.push(`<line x1="${tx.toFixed(1)}" y1="${TOP - 3}" x2="${tx.toFixed(1)}" y2="${plotBottom}" stroke="#fff" stroke-opacity=".05"/>`)
+    parts.push(`<text x="${tx.toFixed(1)}" y="8" class="axis" text-anchor="middle">${back(ago)}</text>`)
   }
-  parts.push(`<text x="${X1}" y="11" class="axis" text-anchor="end">now</text>`)
+  parts.push(`<text x="${X1}" y="8" class="axis" text-anchor="end">now</text>`)
 
   rows.forEach(({ lane, depth }, i) => {
-    const y = TOP + i * ROW
-    const mid = y + ROW / 2 - 2
+    const mid = TOP + i * ROW + ROW / 2
     const color = typeColor(lane.id === MAIN ? 'main' : lane.type)
     const isLive = lane.id === MAIN || LIVE.has(lane.status)
     const name = `${depth ? '↳ ' : ''}${clip(lane.label, depth ? 15 : 17)}`
-    parts.push(`<circle cx="${6 + depth * 8}" cy="${mid}" r="3.2" fill="${color}"/>`)
-    parts.push(
-      `<text x="${14 + depth * 8}" y="${mid + 4}" class="${isLive ? 'lane' : 'lane done'}">${esc(name)}</text>`,
-    )
-    parts.push(`<rect x="${X0}" y="${mid - BAR / 2 - 1}" width="${X1 - X0}" height="${BAR + 2}" rx="3" fill="#fff" fill-opacity=".03"/>`)
+    parts.push(`<circle cx="${3 + depth * 7}" cy="${mid}" r="2.4" fill="${color}"/>`)
+    parts.push(`<text x="${10 + depth * 7}" y="${mid + 3}" class="${isLive ? 'lane' : 'lane done'}">${esc(name)}</text>`)
 
     // Busy between calls: a main turn, or an agent's whole run.
     const busy: [number, number][] =
-      lane.id === MAIN
-        ? (lane.turns ?? []).map(([s, e]) => [s, e ?? at])
-        : [[lane.startedAt, lane.endedAt ?? at]]
+      lane.id === MAIN ? (lane.turns ?? []).map(([s, e]) => [s, e ?? at]) : [[lane.startedAt, lane.endedAt ?? at]]
     for (const [s, e] of busy) {
       if (e < from) continue
       parts.push(
-        `<rect x="${x(s).toFixed(1)}" y="${mid - 2}" width="${Math.max(0, x(e) - x(s)).toFixed(1)}" height="4" rx="2" fill="${color}" fill-opacity=".18"/>`,
+        `<rect x="${x(s).toFixed(1)}" y="${mid - 1}" width="${Math.max(0, x(e) - x(s)).toFixed(1)}" height="2" rx="1" fill="${color}" fill-opacity=".22"/>`,
       )
     }
 
     for (const s of lane.spans) {
       if (spanEnd(s, at) < from) continue
       const sx = x(s.start)
-      const w = Math.max(2.5, x(spanEnd(s, at)) - sx)
+      const w = Math.max(2, x(spanEnd(s, at)) - sx)
       const fill = s.isError ? ERROR_COLOR : KIND_COLORS[kindOf(s.tool)]
       const pulse =
         s.end === undefined
           ? `<animate attributeName="fill-opacity" values=".4;.95;.4" dur="1.4s" repeatCount="indefinite"/>`
           : ''
       parts.push(
-        `<rect x="${sx.toFixed(1)}" y="${mid - BAR / 2}" width="${w.toFixed(1)}" height="${BAR}" rx="2" fill="${fill}">${pulse}</rect>`,
+        `<rect x="${sx.toFixed(1)}" y="${mid - BAR / 2}" width="${w.toFixed(1)}" height="${BAR}" rx="1.5" fill="${fill}">${pulse}</rect>`,
       )
     }
 
@@ -177,46 +196,49 @@ export function chartSvg(rows: Row[], from: number, at: number, kinds: Kind[], h
     const last = lastActivity(lane)
     if (lane.id !== MAIN && lane.status === 'running' && !running && at - last >= QUIET_MS) {
       parts.push(
-        `<rect x="${x(last).toFixed(1)}" y="${mid - 2}" width="${Math.max(0, X1 - x(last)).toFixed(1)}" height="4" rx="2" fill="${QUIET_COLOR}" fill-opacity=".35"/>`,
+        `<rect x="${x(last).toFixed(1)}" y="${mid - 1}" width="${Math.max(0, X1 - x(last)).toFixed(1)}" height="2" rx="1" fill="${QUIET_COLOR}" fill-opacity=".45"/>`,
       )
       parts.push(
-        `<text x="${Math.min(X1 - 92, x(last) + 4).toFixed(1)}" y="${mid - 7}" class="quiet">no tool call for ${clock(at - last)}</text>`,
+        `<text x="${(X1 - 2).toFixed(1)}" y="${mid - 3}" class="quiet" text-anchor="end">no tool call for ${clock(at - last)}</text>`,
       )
     }
 
     if (!isLive && lane.endedAt !== undefined && lane.endedAt >= from && x(lane.endedAt) < X1 - 30) {
       const word = lane.status === 'failed' ? 'failed' : lane.status === 'killed' ? 'stopped' : 'done'
-      parts.push(`<text x="${(x(lane.endedAt) + 5).toFixed(1)}" y="${mid + 3}" class="axis">${word}</text>`)
+      parts.push(`<text x="${(x(lane.endedAt) + 4).toFixed(1)}" y="${mid + 3}" class="axis">${word}</text>`)
     }
   })
 
   parts.push(
-    `<line x1="${X1}" y1="${TOP - 4}" x2="${X1}" y2="${legendY - 6}" stroke="#fff" stroke-opacity=".5" stroke-dasharray="2 3"/>`,
+    `<line x1="${X1}" y1="${TOP - 3}" x2="${X1}" y2="${plotBottom}" stroke="#fff" stroke-opacity=".45" stroke-dasharray="2 2"/>`,
   )
 
-  // Legend: the kinds on the chart, then errors, then the thin line.
-  let lx = 0
-  const swatches: [string, string][] = kinds.map(k => [KIND_COLORS[k], KIND_LABELS[k]])
-  if (hasErrors) swatches.push([ERROR_COLOR, 'error'])
-  for (const [fill, label] of swatches) {
-    parts.push(`<rect x="${lx}" y="${legendY}" width="8" height="8" rx="2" fill="${fill}"/>`)
-    parts.push(`<text x="${lx + 12}" y="${legendY + 8}" class="legend">${label}</text>`)
-    lx += 22 + label.length * 5.4
-  }
-  parts.push(`<text x="0" y="${legendY + 25}" class="axis">thin line: busy between calls</text>`)
+  legendRows.forEach((row, r) => {
+    const ly = legendY + r * 11
+    let lx = 0
+    for (const { fill, label, isLine } of row) {
+      parts.push(
+        isLine
+          ? `<rect x="${lx}" y="${ly - 4}" width="8" height="2" rx="1" fill="${fill}" fill-opacity=".5"/>`
+          : `<rect x="${lx}" y="${ly - 6}" width="6" height="6" rx="1.5" fill="${fill}"/>`,
+      )
+      parts.push(`<text x="${lx + (isLine ? 11 : 9)}" y="${ly}" class="legend">${label}</text>`)
+      lx += itemW({ label, isLine })
+    }
+  })
 
   const w = W + PAD_X * 2
   const h = H + PAD_Y * 2
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">` +
     `<style>` +
-    `.axis{font:9px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#6f6c85}` +
-    `.lane{font:11px ui-sans-serif,system-ui,sans-serif;fill:#e8e6f0}` +
+    `.axis{font:8px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#6f6c85}` +
+    `.lane{font:10px ui-sans-serif,system-ui,sans-serif;fill:#e8e6f0}` +
     `.lane.done{fill:#8d8aa3}` +
-    `.legend{font:10px ui-sans-serif,system-ui,sans-serif;fill:#8d8aa3}` +
-    `.quiet{font:9px ui-sans-serif,system-ui,sans-serif;fill:${QUIET_COLOR}}` +
+    `.legend{font:8.5px ui-sans-serif,system-ui,sans-serif;fill:#8d8aa3}` +
+    `.quiet{font:8px ui-sans-serif,system-ui,sans-serif;fill:${QUIET_COLOR}}` +
     `</style>` +
-    `<rect width="${w}" height="${h}" rx="10" fill="${CARD}"/>` +
+    `<rect width="${w}" height="${h}" rx="8" fill="${CARD}"/>` +
     `<g transform="translate(${PAD_X} ${PAD_Y})">` +
     parts.join('') +
     `</g></svg>`

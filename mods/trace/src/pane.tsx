@@ -1,9 +1,13 @@
 import type { EngineInterface, On } from 'claude-code'
 
-import { chartSvg, rowsFor, summarize, windowStart } from './chart'
+import { MIN_WIDTH, chartSvg, rowsFor, summarize, windowStart } from './chart'
 import { clip, seconds } from './format'
 import { ERROR_COLOR, KIND_COLORS, KIND_LABELS, kindOf } from './kinds'
 import { readLanes, readNow, readWindow, setWindow } from './state'
+
+// A pane's width arrives in cells of its code font; this turns cells into
+// CSS pixels, so the chart is drawn at its size on screen and never stretched.
+const CELL_PX = 7.2
 
 const WINDOWS: [string, number][] = [
   ['30s', 30_000],
@@ -52,13 +56,9 @@ export function pane(on: On) {
     )
 
     return (
-      <Box flexDirection="column" gap="sm">
-        <Box flexDirection="row" alignItems="center" gap="sm" paddingX="sm">
-          <Box flexGrow={1}>
-            <Text size="footnote" weight="medium">
-              Trace
-            </Text>
-          </Box>
+      <Box flexDirection="column" gap="xs">
+        {/* The pane's tab already says Trace: the top row is the window chips alone. */}
+        <Box flexDirection="row" alignItems="center" justifyContent="flex-end" gap="sm" paddingX="sm">
           {WINDOWS.map(([name, ms]) => (
             <Button
               key={`window-${name}`}
@@ -80,7 +80,7 @@ export function pane(on: On) {
 
         {hasCalls && Svg && (
           <Svg
-            source={chartSvg(rows, from, at, sum.kinds, sum.errors > 0)}
+            source={chartSvg(rows, from, at, sum.kinds, sum.errors > 0, Math.max(MIN_WIDTH, e.props.bodyColumns * CELL_PX))}
             alt={`Timeline of ${rows.length} lanes of tool calls over the chosen window`}
           />
         )}
