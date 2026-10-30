@@ -7,6 +7,7 @@ Each mod installs on its own; pick the ones you want.
 | Mod | What it does |
 | --- | --- |
 | [`agents`](mods/agents) | A live side pane of every subagent: what each is doing, its tool calls, tokens and context, and its full transcript |
+| [`trace`](mods/trace) | A timeline of every agent's tool calls: what ran in parallel, what was slow, where agents sat idle |
 
 ## Install
 
