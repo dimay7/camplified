@@ -31,7 +31,7 @@ export function band(on: On) {
     return (
       <Box flexDirection="column">
         {line.rows.map((row, i) => (
-          <Text key={`r${i}`} size="footnote" mono tabular wrap="truncate-end">
+          <Text key={`r${i}`} size="caption" mono tabular wrap="truncate-end">
             {row.map((s, j) => (
               <Text
                 key={`s${j}`}

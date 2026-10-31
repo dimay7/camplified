@@ -4,6 +4,10 @@ Each mod is versioned on its own; entries are grouped by mod, newest first.
 
 ## statusbar
 
+### 0.1.1
+
+- Smaller text: the line is drawn at the caption size, the smallest the desktop app has.
+
 ### 0.1.0
 
 - Runs the `statusLine` command you set for the CLI, with the input the CLI gives it, and draws its output above the desktop app's prompt, colours and all.
