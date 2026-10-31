@@ -2,7 +2,7 @@ import { expect, mock, test } from 'claude-code/testing'
 import type { On, RenderSurface, SessionUsage } from 'claude-code'
 
 import { parseAnsi } from '../src/ansi'
-import { segments } from '../src/bars'
+import { groups, segments } from '../src/bars'
 import { displayName } from '../src/input'
 
 const BAND = {
@@ -17,6 +17,16 @@ const BAND = {
     view: {},
   },
 } as const
+
+type Node = { type: string; props?: Record<string, unknown>; children?: (Node | string)[] }
+
+/** The drawn runs of text, each with its own style: the Texts that hold only strings. */
+function textRuns(node: Node | undefined): { text: string; props: Record<string, unknown> }[] {
+  if (!node) return []
+  const kids = node.children ?? []
+  if (node.type === 'Text' && kids.every(k => typeof k === 'string')) return [{ text: kids.join(''), props: node.props ?? {} }]
+  return kids.flatMap(k => (typeof k === 'string' ? [] : textRuns(k)))
+}
 
 const START = 1_700_000_000_000
 const USAGE: SessionUsage = {
@@ -88,11 +98,12 @@ test("the person's status line is run on the session's figures and drawn in colo
   expect(input.rate_limits.five_hour).toEqual({ used_percentage: 42, resets_at: 1_700_003_600 })
 
   const ui = await $.ui.mount({ ...BAND, surface: 'desktop' })
-  const model = await ui.find({ type: 'Text', text: /^\[Opus 5\.5\]$/ })
-  expect(model?.props.color).toBe('#2fb5c8')
-  expect(model?.props.weight).toBe('semibold')
-  expect((await ui.find({ type: 'Text', text: /^\$1\.68$/ }))?.props.color).toBe('#3fb950')
-  expect((await ui.find({ type: 'Text', text: /^\|$/ }))?.props.dimColor).toBe(true)
+  const drawn = textRuns((await ui.find({ type: 'Box' })) as Node)
+  expect(drawn.find(r => r.text === '[Opus 5.5]')?.props).toMatchObject({ color: '#2fb5c8', weight: 'semibold' })
+  expect(drawn.find(r => r.text === '$1.68')?.props.color).toBe('#3fb950')
+  // The separator is dropped: the groups either side of it are spaced apart instead.
+  expect(drawn.map(r => r.text)).toEqual(['[Opus 5.5]', ' ', '📁 dream', '$1.68', '⏱ 3s'])
+  expect(drawn.every(r => r.props.mono === undefined)).toBe(true)
   await ui.unmount()
 })
 
@@ -128,11 +139,10 @@ test('with no status line set, the built-in line shows the same figures', async 
   expect(runs.length).toBe(0)
   const ui = await $.ui.mount({ ...BAND, surface: 'desktop' })
   expect(await ui.find({ type: 'Text', text: '[Opus 5.5]' })).toBeTruthy()
-  expect(await ui.find({ type: 'Text', text: ' 10%' })).toBeTruthy()
+  expect(await ui.find({ type: 'Text', text: /^10%$/ })).toBeTruthy()
   // The context bar is a drawn bar, not block characters in a proportional face.
   expect((await ui.find({ type: 'Svg' }))?.props.alt).toBe('10%')
   expect(await ui.find({ type: 'Text', text: /█/ })).toBeFalsy()
-  expect((await ui.find({ type: 'Text', text: /^ 10%$/ }))?.props.mono).toBeUndefined()
   expect(await ui.find({ type: 'Text', text: '+2' })).toBeTruthy()
   expect(await ui.find({ type: 'Text', text: '-1' })).toBeTruthy()
   expect(await ui.find({ type: 'Text', text: '$1.68' })).toBeTruthy()
@@ -183,6 +193,12 @@ test('a run of block characters is a bar; other text stays', () => {
     { kind: 'bar', fill: 2.5 / 8, color: '#2fb5c8', text: '██▌·····' },
     { kind: 'text', spans: [{ text: ' 31% · ok' }] },
   ])
+})
+
+test('separators split a row into groups; other bars and slashes stay', () => {
+  const row = [{ text: '[Opus] ', color: 'c' }, { text: '|', isDim: true }, { text: ' 22% | +54/-0 a|b' }]
+  expect(groups(row)).toEqual([[{ text: '[Opus]', color: 'c' }], [{ text: '22%' }], [{ text: '+54/-0 a|b' }]])
+  expect(groups([{ text: 'no separators here' }])).toEqual([[{ text: 'no separators here' }]])
 })
 
 test('model ids read as their names', () => {

@@ -1,7 +1,8 @@
 import type { EngineInterface, On } from 'claude-code'
 
 import type { Span } from '../types'
-import { BAR_SIZE, barSvg, segments } from './bars'
+import type { Segment } from './bars'
+import { BAR_SIZE, barSvg, groups, segments } from './bars'
 import { readHidden, readLine, setHidden } from './state'
 
 const HIDDEN_KEY = 'band.hidden'
@@ -34,7 +35,7 @@ export function band(on: On) {
     // The surfaces that draw vector images get real bars; any other keeps the characters.
     const Svg = 'Svg' in ui ? ui.Svg : undefined
     const text = (key: string, spans: Span[]) => (
-      <Text key={key} size="footnote" tabular wrap="truncate-end">
+      <Text key={key} size="footnote" tabular>
         {spans.map((s, j) => (
           <Text
             key={`s${j}`}
@@ -50,17 +51,33 @@ export function band(on: On) {
       </Text>
     )
 
+    // A bar sits a small gap from its label; a space printed beside it would double that.
+    const trimNextToBars = (segs: Segment[]) =>
+      segs.map((seg, j) => {
+        if (seg.kind !== 'text') return seg
+        const spans = seg.spans.map(s => ({ ...s }))
+        const first = spans[0]
+        const last = spans[spans.length - 1]
+        if (first && segs[j - 1]?.kind === 'bar') first.text = first.text.trimStart()
+        if (last && segs[j + 1]?.kind === 'bar') last.text = last.text.trimEnd()
+        return { ...seg, spans }
+      })
+
     return (
-      <Box flexDirection="column">
+      <Box flexDirection="column" rowGap="sm">
         {line.rows.map((row, i) => (
-          <Box key={`r${i}`} flexDirection="row" alignItems="center">
-            {segments(row).map((seg, j) =>
-              seg.kind === 'text'
-                ? text(`t${j}`, seg.spans)
-                : Svg
-                  ? <Svg key={`b${j}`} source={barSvg(seg.fill, seg.color)} alt={`${Math.round(seg.fill * 100)}%`} {...BAR_SIZE} />
-                  : text(`t${j}`, [{ text: seg.text, color: seg.color }]),
-            )}
+          <Box key={`r${i}`} flexDirection="row" flexWrap="wrap" alignItems="center" columnGap="lg" rowGap="xs">
+            {groups(row).map((group, g) => (
+              <Box key={`g${g}`} flexDirection="row" alignItems="center" columnGap="xs">
+                {trimNextToBars(segments(group)).map((seg, j) =>
+                  seg.kind === 'text'
+                    ? text(`t${j}`, seg.spans)
+                    : Svg
+                      ? <Svg key={`b${j}`} source={barSvg(seg.fill, seg.color)} alt={`${Math.round(seg.fill * 100)}%`} {...BAR_SIZE} />
+                      : text(`t${j}`, [{ text: seg.text, color: seg.color }]),
+                )}
+              </Box>
+            ))}
           </Box>
         ))}
         {line.error ? (

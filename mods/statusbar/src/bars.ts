@@ -52,3 +52,34 @@ export function barSvg(fill: number, color = '#8b949e') {
 }
 
 export const BAR_SIZE = { width: BAR_W, height: BAR_H }
+
+// A `|` or `│` standing alone between spaces is a separator a status line drew
+// between its parts; in the app the parts are spaced apart instead.
+const SEPARATOR = /(?:^|\s+)[|│](?:\s+|$)/
+
+/**
+ * Splits a row at its separators into groups of spans, the separators and the
+ * spaces around them dropped, so each group can be drawn with room around it.
+ * A row without separators is one group.
+ */
+export function groups(row: Span[]): Span[][] {
+  const out: Span[][] = [[]]
+  for (const span of row) {
+    const parts = span.text.split(SEPARATOR)
+    parts.forEach((text, i) => {
+      if (i > 0) out.push([])
+      if (text) out[out.length - 1]?.push({ ...span, text })
+    })
+  }
+  return out
+    .map(group => {
+      // Trim the group's own edges: the space that stood beside a separator.
+      const g = group.map(s => ({ ...s }))
+      const first = g[0]
+      const last = g[g.length - 1]
+      if (first) first.text = first.text.trimStart()
+      if (last) last.text = last.text.trimEnd()
+      return g.filter(s => s.text)
+    })
+    .filter(g => g.length)
+}
