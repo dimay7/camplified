@@ -4,6 +4,11 @@ Each mod is versioned on its own; entries are grouped by mod, newest first.
 
 ## statusbar
 
+### 0.1.2
+
+- Less dense: the `|` separators a status line prints between its parts become space, the two lines have room between them, and a bar sits a small gap from its label.
+- A line too long for the window wraps between its parts instead of being cut off.
+
 ### 0.1.1
 
 - The line is drawn in the app's own font, not a monospaced one, at the footnote size, with digits of one width so the timer holds still.
