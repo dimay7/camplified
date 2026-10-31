@@ -8,7 +8,7 @@ Your Claude Code status line, in the desktop app. The CLI draws the `statusLine`
 
 ## What it shows
 
-- **Your own status line**, whatever it prints: the command in the `statusLine` setting of your `~/.claude/settings.json` (or a project's), run as the CLI runs it, with the JSON it reads on stdin. Its ANSI colours, bold and dim come through; one row per line it prints.
+- **Your own status line**, whatever it prints: the command in the `statusLine` setting of your `~/.claude/settings.json` (or a project's), run as the CLI runs it, with the JSON it reads on stdin. Its ANSI colours, bold and dim come through, one row per line it prints, in the app's own font. A progress bar it draws in block characters (`███····`) is drawn as a thin bar, since those characters change width in a proportional font.
 - **A built-in line** when no `statusLine` is set: model, folder, a context bar, the 5-hour and 7-day rate limits, lines added and removed, cost and time.
 - **Why your line is not showing**, in one dim row, when the command fails (a missing `jq`, a non-zero exit, a timeout). The built-in line stands in meanwhile.
 
@@ -55,6 +55,7 @@ The command runs with `/bin/sh -c` in the session's folder. An app opened from t
 ## How it works
 
 - `src/run.ts` builds the input, runs the command and keeps the line current; it also counts the lines each edit changes.
+- `src/bars.ts` finds those character bars in a row and draws them.
 - `src/ansi.ts` turns the command's output into styled runs of text: the 16 colours, the 256, 24-bit colour, bold, dim, italic, underline.
 - `src/input.ts` is the input's shape and the built-in line.
 - `src/band.tsx` draws the band and answers `/statusbar`.

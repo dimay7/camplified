@@ -1,6 +1,6 @@
 {
   "name": "statusbar",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Your Claude Code status line, in the desktop app: runs the statusLine command you set for the CLI and draws its coloured output above the prompt",
   "author": {
     "name": "dimay7",

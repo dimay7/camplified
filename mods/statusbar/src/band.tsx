@@ -1,5 +1,7 @@
 import type { EngineInterface, On } from 'claude-code'
 
+import type { Span } from '../types'
+import { BAR_SIZE, barSvg, segments } from './bars'
 import { readHidden, readLine, setHidden } from './state'
 
 const HIDDEN_KEY = 'band.hidden'
@@ -27,24 +29,39 @@ export function band(on: On) {
     const line = await readLine($)
     if (!line || (await readHidden($))) return next(e)
 
-    const { Box, Text } = $.ui.resolve(e)
+    const ui = $.ui.resolve(e)
+    const { Box, Text } = ui
+    // The surfaces that draw vector images get real bars; any other keeps the characters.
+    const Svg = 'Svg' in ui ? ui.Svg : undefined
+    const text = (key: string, spans: Span[]) => (
+      <Text key={key} size="footnote" tabular wrap="truncate-end">
+        {spans.map((s, j) => (
+          <Text
+            key={`s${j}`}
+            color={s.color}
+            dimColor={s.isDim}
+            weight={s.isBold ? 'semibold' : undefined}
+            italic={s.isItalic}
+            underline={s.isUnderline}
+          >
+            {s.text}
+          </Text>
+        ))}
+      </Text>
+    )
+
     return (
       <Box flexDirection="column">
         {line.rows.map((row, i) => (
-          <Text key={`r${i}`} size="footnote" mono tabular wrap="truncate-end">
-            {row.map((s, j) => (
-              <Text
-                key={`s${j}`}
-                color={s.color}
-                dimColor={s.isDim}
-                weight={s.isBold ? 'semibold' : undefined}
-                italic={s.isItalic}
-                underline={s.isUnderline}
-              >
-                {s.text}
-              </Text>
-            ))}
-          </Text>
+          <Box key={`r${i}`} flexDirection="row" alignItems="center">
+            {segments(row).map((seg, j) =>
+              seg.kind === 'text'
+                ? text(`t${j}`, seg.spans)
+                : Svg
+                  ? <Svg key={`b${j}`} source={barSvg(seg.fill, seg.color)} alt={`${Math.round(seg.fill * 100)}%`} {...BAR_SIZE} />
+                  : text(`t${j}`, [{ text: seg.text, color: seg.color }]),
+            )}
+          </Box>
         ))}
         {line.error ? (
           <Text size="caption" dimColor wrap="truncate-end">

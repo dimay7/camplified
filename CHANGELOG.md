@@ -4,6 +4,11 @@ Each mod is versioned on its own; entries are grouped by mod, newest first.
 
 ## statusbar
 
+### 0.1.1
+
+- The line is drawn in the app's own font, not a monospaced one, at the footnote size, with digits of one width so the timer holds still.
+- A progress bar drawn in block characters (`███····`) becomes a thin bar, which keeps its length in a proportional font.
+
 ### 0.1.0
 
 - Runs the `statusLine` command you set for the CLI, with the input the CLI gives it, and draws its output above the desktop app's prompt, colours and all.

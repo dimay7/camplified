@@ -2,6 +2,7 @@ import { expect, mock, test } from 'claude-code/testing'
 import type { On, RenderSurface, SessionUsage } from 'claude-code'
 
 import { parseAnsi } from '../src/ansi'
+import { segments } from '../src/bars'
 import { displayName } from '../src/input'
 
 const BAND = {
@@ -128,6 +129,10 @@ test('with no status line set, the built-in line shows the same figures', async 
   const ui = await $.ui.mount({ ...BAND, surface: 'desktop' })
   expect(await ui.find({ type: 'Text', text: '[Opus 5.5]' })).toBeTruthy()
   expect(await ui.find({ type: 'Text', text: ' 10%' })).toBeTruthy()
+  // The context bar is a drawn bar, not block characters in a proportional face.
+  expect((await ui.find({ type: 'Svg' }))?.props.alt).toBe('10%')
+  expect(await ui.find({ type: 'Text', text: /█/ })).toBeFalsy()
+  expect((await ui.find({ type: 'Text', text: /^ 10%$/ }))?.props.mono).toBeUndefined()
   expect(await ui.find({ type: 'Text', text: '+2' })).toBeTruthy()
   expect(await ui.find({ type: 'Text', text: '-1' })).toBeTruthy()
   expect(await ui.find({ type: 'Text', text: '$1.68' })).toBeTruthy()
@@ -169,6 +174,14 @@ test('ANSI codes become styled spans', () => {
   expect(rows).toEqual([
     [{ text: 'orange', color: '#ff8700' }, { text: ' plain ' }, { text: 'rgb', color: '#010203' }],
     [{ text: 'link' }],
+  ])
+})
+
+test('a run of block characters is a bar; other text stays', () => {
+  const segs = segments([{ text: '██▌·····', color: '#2fb5c8' }, { text: ' 31% · ok' }])
+  expect(segs).toEqual([
+    { kind: 'bar', fill: 2.5 / 8, color: '#2fb5c8', text: '██▌·····' },
+    { kind: 'text', spans: [{ text: ' 31% · ok' }] },
   ])
 })
 
