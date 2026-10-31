@@ -16,6 +16,7 @@ Include which mod and version, what an attacker could do, and the steps to show 
 So you can judge them before installing:
 
 - They observe Claude Code's events and draw panes. They do not block or change tool calls.
+- `statusbar` runs one command: the `statusLine` command already in your Claude Code settings, which the CLI runs too. It runs nothing else, and nothing when no such command is set.
 - The only network request any mod makes is the daily update check: two `GET` requests to `raw.githubusercontent.com/dimay7/camplified`, carrying nothing about you or your work. It can be turned off in each mod's settings.
 - They read no files outside their own folder.
 

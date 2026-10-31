@@ -2,6 +2,16 @@
 
 Each mod is versioned on its own; entries are grouped by mod, newest first.
 
+## statusbar
+
+### 0.1.0
+
+- Runs the `statusLine` command you set for the CLI, with the input the CLI gives it, and draws its output above the desktop app's prompt, colours and all.
+- A built-in line when none is set, or when the command fails, with a dim row saying why.
+- Nothing in the terminal, which keeps the CLI's own status line.
+- `/statusbar` hides and shows the line.
+- Daily update check, off in the mod's settings.
+
 ## trace
 
 ### 0.1.1

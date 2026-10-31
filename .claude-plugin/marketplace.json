@@ -17,6 +17,11 @@
       "name": "trace",
       "source": "./mods/trace",
       "description": "A timeline of every agent's tool calls: what ran in parallel, what was slow, where agents sat idle"
+    },
+    {
+      "name": "statusbar",
+      "source": "./mods/statusbar",
+      "description": "Your Claude Code status line, in the desktop app: runs the statusLine command you set for the CLI and draws its coloured output above the prompt"
     }
   ]
 }
