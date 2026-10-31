@@ -8,10 +8,12 @@ Each mod installs on its own; pick the ones you want.
 | --- | --- |
 | [`agents`](mods/agents) | A live side pane of every subagent: what each is doing, its tool calls, tokens and context, and its full transcript |
 | [`trace`](mods/trace) | A timeline of every agent's tool calls: what ran in parallel, what was slow, where agents sat idle |
+| [`statusbar`](mods/statusbar) | Your CLI status line in the desktop app: runs your `statusLine` command and draws its coloured output above the prompt |
 
 <p>
   <img src="mods/agents/docs/pane.svg" width="49%" alt="The agents pane, with sample data">
   <img src="mods/trace/docs/pane.svg" width="49%" alt="The trace pane, with sample data">
+  <img src="mods/statusbar/docs/band.svg" width="98.5%" alt="The status line above the desktop prompt, with sample data">
 </p>
 
 ## Install

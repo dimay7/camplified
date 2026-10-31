@@ -1,0 +1,28 @@
+{
+  "name": "statusbar",
+  "version": "0.1.0",
+  "description": "Your Claude Code status line, in the desktop app: runs the statusLine command you set for the CLI and draws its coloured output above the prompt",
+  "author": {
+    "name": "dimay7",
+    "url": "https://github.com/dimay7"
+  },
+  "homepage": "https://github.com/dimay7/camplified/tree/main/mods/statusbar",
+  "repository": "https://github.com/dimay7/camplified",
+  "license": "MIT",
+  "keywords": [
+    "statusline",
+    "status line",
+    "desktop",
+    "cost",
+    "context"
+  ],
+  "userConfig": {
+    "checkForUpdates": {
+      "type": "boolean",
+      "title": "Check for updates",
+      "description": "Once a day, look on GitHub for a newer version of this mod and for new camplified mods, and say so in a toast. Nothing is installed automatically.",
+      "default": true
+    }
+  },
+  "types": "./types/index.d.ts"
+}
